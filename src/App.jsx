@@ -506,7 +506,7 @@ body{font-family:'Crimson Pro',serif;font-size:18px;color:var(--text);line-heigh
 .ab:disabled{opacity:.3;cursor:not-allowed;transform:none!important;}
 .ab.real-action{border-color:rgba(129,199,132,.55);background:#0D1E0F;}
 .ab.real-action:hover:not(:disabled){border-color:var(--green-l);background:#102814;}
-.ab.bluff-action{border-color:rgba(220,100,100,.42);}
+.ab.bluff-action{border-color:rgba(220,100,100,.65);background:rgba(80,10,10,.25);}
 .ab.safe-action{border-color:var(--border-l);}
 .ab.danger-action{border-color:rgba(230,150,0,.58);background:#1A1200;}
 .ab-head{display:flex;align-items:center;gap:11px;}
@@ -517,7 +517,7 @@ body{font-family:'Crimson Pro',serif;font-size:18px;color:var(--text);line-heigh
 .badge{display:inline-block;font-size:13px;font-weight:600;padding:5px 12px;border-radius:20px;margin-top:4px;align-self:flex-start;line-height:1.3;}
 .b-green{background:rgba(129,199,132,.2);color:#B8E8B8;border:1px solid rgba(129,199,132,.38);}
 .b-blue{background:rgba(100,185,245,.18);color:#A8D8F8;border:1px solid rgba(100,185,245,.32);}
-.b-red{background:rgba(220,100,100,.2);color:#FFB8B8;border:1px solid rgba(220,100,100,.35);}
+.b-red{background:rgba(200,30,30,.28);color:#FFD0D0;border:1.5px solid rgba(220,80,80,.6);font-weight:700;letter-spacing:.04em;}
 .b-orange{background:rgba(230,150,0,.2);color:#FFD080;border:1px solid rgba(230,150,0,.35);}
 .b-real{background:rgba(129,199,132,.18);color:#B0E0B0;border:1px solid rgba(129,199,132,.48);font-size:12px;}
 
@@ -633,23 +633,34 @@ body{font-family:'Crimson Pro',serif;font-size:18px;color:var(--text);line-heigh
 .my-hand .hand-cards-row{flex-direction:column;}
 .my-hand .hand-card{border-right:none;border-bottom:1.5px solid var(--border);}
 .my-hand .hand-card:last-child{border-bottom:none;}
-.my-hand .hc-emoji{font-size:28px;}
-.my-hand .hc-name{font-size:14px;}
-.my-hand .hc-role{font-size:13px;}
-.my-hand .hc-count{font-size:12px;}
-.my-hand .hc-header{padding:12px 12px 8px;}
-.my-hand .hc-abilities{padding:2px 12px 10px;}
-.my-hand .hc-ability-text{font-size:13px;}
-.my-hand .hc-ability-label{font-size:11px;}
-.my-hand .hc-action-btn{font-size:12px;padding:10px 12px;}
-.my-hand .my-hand-title{font-size:13px;}
-.my-hand .my-hand-meta{font-size:14px;}
+.my-hand .hc-emoji{font-size:42px;}
+.my-hand .hc-name{font-size:18px;}
+.my-hand .hc-role{font-size:15px;}
+.my-hand .hc-count{font-size:14px;}
+.my-hand .hc-header{padding:16px 16px 12px;}
+.my-hand .hc-abilities{padding:4px 16px 14px;}
+.my-hand .hc-ability-text{font-size:15px;}
+.my-hand .hc-ability-label{font-size:13px;}
+.my-hand .hc-action-btn{font-size:14px;padding:13px 16px;font-weight:700;}
+.my-hand .my-hand-title{font-size:15px;}
+.my-hand .my-hand-meta{font-size:16px;}
 /* Pending banner */
 .resp-banner{background:#1C1010;border:2px solid #7A2828;border-radius:10px;padding:16px 20px;}
 .resp-banner-title{font-family:"Cinzel",serif;font-size:15px;font-weight:700;color:#FFBBBB;margin-bottom:10px;}
 .resp-claim{font-size:16px;color:var(--text);margin-bottom:14px;padding:12px 16px;background:rgba(0,0,0,.28);border-radius:8px;border-left:4px solid var(--gold);line-height:1.6;}
 /* Compact status bar */
 .status-bar{padding:10px 16px;}
+/* Turn timer */
+.turn-timer{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;background:var(--bg3);border:1.5px solid var(--border);}
+.timer-ring{position:relative;width:38px;height:38px;flex-shrink:0;}
+.timer-ring svg{transform:rotate(-90deg);}
+.timer-ring-bg{fill:none;stroke:var(--border);stroke-width:3.5;}
+.timer-ring-fill{fill:none;stroke-width:3.5;stroke-linecap:round;transition:stroke-dashoffset .9s linear,stroke .4s;}
+.timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Cinzel",serif;font-size:13px;font-weight:700;}
+.timer-label{font-size:14px;color:var(--text-2);flex:1;}
+.timer-label b{color:var(--gold);}
+.timer-label.urgent{color:#FF9898;}
+.timer-label.urgent b{color:#FF9898;}
 .status-l{font-size:13px;}
 .status-c{font-size:15px;}
 .status-r{font-size:13px;}
@@ -967,11 +978,16 @@ export default function App() {
   const [displayedEvent, setDisplayedEvent] = useState("The fate of the Chola throne awaits…");
   const [tutStep, setTutStep] = useState(0);
   const [tutChosen, setTutChosen] = useState(null);
+  const [prevScreen, setPrevScreen] = useState(null);
   // pendingReveal: { reveal, postState, iCalledBluff }
   const [pendingReveal, setPendingReveal] = useState(null);
+  const [turnTimer, setTurnTimer] = useState(30);
 
-  const aiRef   = useRef(null);
-  const prevEv  = useRef(null);
+  const pollRef   = useRef(null);
+  const aiRef     = useRef(null);
+  const prevEv    = useRef(null);
+  const timerRef  = useRef(null);
+  const timerTurn = useRef(null); // tracks which turn the timer is counting for
 
   const me           = gs?.players?.find(p => p.id === playerId);
   const ap           = gs ? activePl(gs) : null;
@@ -988,7 +1004,41 @@ export default function App() {
     }
   }, [gs?.lastEvent]);
 
-  // MP real-time listener (Firebase onSnapshot — instant updates)
+  // ── 30-second turn timer ────────────────────────────────────────────────
+  useEffect(() => {
+    if (!gs || gs.phase !== "playing" || pendingReveal || screen !== "game") {
+      clearInterval(timerRef.current);
+      return;
+    }
+    // Identify the current "turn key" — unique per turn/pending state
+    const turnKey = ap?.id + "|" + (pa ? "resp" : "act") + "|" + gs.turn;
+    if (timerTurn.current !== turnKey) {
+      // New turn started — reset timer
+      timerTurn.current = turnKey;
+      setTurnTimer(30);
+      clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setTurnTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            // Time's up — auto-action
+            if (isMyTurn && !pa) {
+              // Human's turn — auto Income
+              doAction({ type: "income" });
+            } else if (myPending) {
+              // Human needs to respond — auto Pass
+              doResponse("pass");
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {};
+  }, [gs?.turn, ap?.id, pa, isMyTurn, myPending, pendingReveal, screen]);
+
+  // MP real-time listener (Firebase onSnapshot)
   useEffect(() => {
     if (!roomId || mode !== "mp") return;
     const unsub = storeSubscribe(`ps_${roomId}`, (s) => {
@@ -996,9 +1046,7 @@ export default function App() {
       if (s.challengeReveal && !gs?.challengeReveal) {
         const iCalled = s.challengeReveal.challengerId === playerId;
         setPendingReveal({ reveal: s.challengeReveal, postState: s, iCalledBluff: iCalled });
-      } else {
-        setGs(s);
-      }
+      } else setGs(s);
       if (s.phase === "playing" && screen === "mp_lobby") setScreen("game");
     });
     return () => unsub();
@@ -1329,7 +1377,7 @@ export default function App() {
 
     function advance() {
       setTutChosen(null);
-      if (sc.isLast) { setTutStep(0); setScreen("home"); }
+      if (sc.isLast) { setTutStep(0); setScreen(prevScreen||"home"); setPrevScreen(null); setTutChosen(null); }
       else setTutStep(s => s+1);
     }
 
@@ -1484,7 +1532,7 @@ export default function App() {
 
         {/* Footer */}
         <div className="itut-footer">
-          <button className="btn btn-gh btn-sm" onClick={()=>{setTutChosen(null);setTutStep(0);setScreen("home");}}>✕ Exit</button>
+          <button className="btn btn-gh btn-sm" onClick={()=>{setTutChosen(null);setTutStep(0);setScreen(prevScreen||"home");setPrevScreen(null);}}>{prevScreen==="game"?"▶ Resume Game":"← Home"}</button>
           {tutStep > 0 && <button className="btn btn-dk btn-sm" onClick={()=>{setTutChosen(null);setTutStep(s=>s-1);}}>← Back</button>}
           <div className="itut-progress-bar"><div className="itut-progress-fill" style={{width:`${pct}%`}}/></div>
           <button className="btn btn-g btn-sm" disabled={!canAdvance} onClick={advance}>
@@ -1627,20 +1675,22 @@ export default function App() {
             <>
               <div className="pb-q">How do you respond?</div>
               <div className="resp-row">
-                <button className="btn btn-gh btn-sm" onClick={()=>doResponse("pass")}>✋ Pass</button>
+                <button className="btn btn-gh btn-sm" onClick={()=>doResponse("pass")}>✋ Pass — allow it</button>
                 {pa.claimedCard && (
-                  <button className="btn btn-r btn-sm" onClick={()=>doResponse("challenge")}>
+                  <button className="btn btn-r btn-sm" onClick={()=>doResponse("challenge")} title="If they don't hold the claimed card, they lose a card. If they DO hold it, YOU lose a card.">
                     🎯 Challenge — Call the Bluff
                   </button>
                 )}
-                {pa.type==="gift"&&<button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:pazhuvettarayar")}>🛡 Block (Pazhuvettarayar)</button>}
+                {pa.type==="gift"&&<><div style={{width:"100%",fontSize:12,color:"var(--text-3)",fontFamily:"Cinzel,serif",letterSpacing:".1em",textTransform:"uppercase",marginTop:4,marginBottom:2}}>— Counter Actions —</div>{(()=>{const h=me.cards.includes("pazhuvettarayar");return(<button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:pazhuvettarayar")} style={h?{borderColor:"var(--green-l)"}:{borderColor:"#EF5350",opacity:.85}}>{h?"🛡 COUNTER: Block — Pazhuvettarayar (you hold it ✅)":"🛡 COUNTER BLUFF: Block — Pazhuvettarayar (you don't hold it ⚠️)"}</button>);})()}</>}
                 {pa.type==="steal"&&pa.targetId===playerId&&<>
-                  <button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:nandini")}>🛡 Block (Nandini)</button>
-                  <button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:kundavai")}>🛡 Block (Kundavai)</button>
+                  <div style={{width:"100%",fontSize:12,color:"var(--text-3)",fontFamily:"Cinzel,serif",letterSpacing:".1em",textTransform:"uppercase",marginTop:4,marginBottom:2}}>— Counter Actions (you are being stolen from) —</div>
+                  {(()=>{const h=me.cards.includes("nandini");return(<button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:nandini")} style={h?{borderColor:"var(--green-l)"}:{borderColor:"#EF5350",opacity:.85}}>{h?"🛡 COUNTER: Block — Nandini (you hold it ✅)":"🛡 COUNTER BLUFF: Block — Nandini (you don't hold it ⚠️)"}</button>);})()}
+                  {(()=>{const h=me.cards.includes("kundavai");return(<button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:kundavai")} style={h?{borderColor:"var(--green-l)"}:{borderColor:"#EF5350",opacity:.85}}>{h?"🛡 COUNTER: Block — Kundavai (you hold it ✅)":"🛡 COUNTER BLUFF: Block — Kundavai (you don't hold it ⚠️)"}</button>);})()}
                 </>}
                 {pa.type==="assassinate"&&pa.targetId===playerId&&<>
-                  <button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:aazhwarkadiyan")}>🛡 Block (Aazhwarkadiyan)</button>
-                  <button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:poonkuzhali")}>🛡 Block (Poonkuzhali)</button>
+                  <div style={{width:"100%",fontSize:12,color:"#FF9898",fontFamily:"Cinzel,serif",letterSpacing:".1em",textTransform:"uppercase",marginTop:4,marginBottom:2}}>— ⚠️ You are being assassinated! Counter Actions: —</div>
+                  {(()=>{const h=me.cards.includes("aazhwarkadiyan");return(<button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:aazhwarkadiyan")} style={h?{borderColor:"var(--green-l)"}:{borderColor:"#EF5350",opacity:.85}}>{h?"🛡 COUNTER: Block — Aazhwarkadiyan (you hold it ✅)":"🛡 COUNTER BLUFF: Block — Aazhwarkadiyan (you don't hold it ⚠️)"}</button>);})()}
+                  {(()=>{const h=me.cards.includes("poonkuzhali");return(<button className="btn btn-dk btn-sm" onClick={()=>doResponse("block:poonkuzhali")} style={h?{borderColor:"var(--green-l)"}:{borderColor:"#EF5350",opacity:.85}}>{h?"🛡 COUNTER: Block — Poonkuzhali (you hold it ✅)":"🛡 COUNTER BLUFF: Block — Poonkuzhali (you don't hold it ⚠️)"}</button>);})()}
                 </>}
               </div>
             </>
@@ -1736,8 +1786,8 @@ export default function App() {
                           <div className="ab-desc">{ch.action}</div>
                           {cost>0&&<div className="ab-cost">Costs {cost} coins{cantAfford?` (need ${cost-me.coins} more)`:""}</div>}
                           {iHave
-                            ? <span className="badge b-real">✅ You hold this — safe</span>
-                            : <span className="badge b-red">🎭 Bluff</span>}
+                            ? <span className="badge b-real">✅ SAFE — you hold {CHARS[k].short}</span>
+                            : <span className="badge b-red">⚠️ BLUFF — you do NOT hold {CHARS[k].short}. If challenged, you LOSE a card!</span>}
                         </button>
                       );
                     })}
@@ -1868,6 +1918,37 @@ export default function App() {
             <span className="status-r">📜 Deck: {gs.deck.length}</span>
           </div>
           <div className="ticker">{displayedEvent}</div>
+          {/* Turn Timer */}
+          {gs.phase==="playing" && !pendingReveal && (()=>{
+            const urgent = turnTimer <= 10;
+            const radius = 15;
+            const circ = 2 * Math.PI * radius;
+            const offset = circ * (1 - turnTimer/30);
+            const strokeColor = turnTimer > 15 ? "var(--green-l)" : turnTimer > 8 ? "var(--gold)" : "#EF5350";
+            const isHumanAct = isMyTurn && !pa;
+            const isHumanResp = myPending;
+            const needsAction = isHumanAct || isHumanResp;
+            return(
+              <div className={`turn-timer${urgent?" border-urgent":""}`} style={{marginBottom:10,borderColor:urgent?"#EF5350":undefined}}>
+                <div className="timer-ring">
+                  <svg width="38" height="38" viewBox="0 0 38 38">
+                    <circle className="timer-ring-bg" cx="19" cy="19" r={radius}/>
+                    <circle className="timer-ring-fill" cx="19" cy="19" r={radius}
+                      stroke={strokeColor}
+                      strokeDasharray={circ}
+                      strokeDashoffset={offset}/>
+                  </svg>
+                  <div className="timer-num" style={{color:strokeColor}}>{turnTimer}</div>
+                </div>
+                <div className={`timer-label${urgent?" urgent":""}`}>
+                  {needsAction
+                    ? <><b>{isHumanAct?"Your turn":"Respond now"}</b> — {turnTimer}s left{urgent?" ⚠️ Auto-Income soon!":""}</>
+                    : <><b>{ap?.name}</b> has {turnTimer}s to act</>
+                  }
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* MAIN — 2-column: Left=MyHand, Right=Actions */}
@@ -1916,7 +1997,7 @@ export default function App() {
         {screen==="mp_lobby" && renderMPLobby()}
         {screen==="tutorial" && renderTutorial()}
         {screen==="game"     && renderGame()}
-        {screen==="game" && <button className="help-btn" onClick={()=>{setTutStep(0);setScreen("tutorial");}} title="Help & Tutorial">?</button>}
+        {screen==="game" && <button className="help-btn" onClick={()=>{setPrevScreen("game");setTutStep(0);setScreen("tutorial");}} title="Help & Tutorial">?</button>}
       </div>
     </>
   );
